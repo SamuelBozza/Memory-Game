@@ -2,6 +2,8 @@ const grid = document.querySelector(".grid");
 const spanPlayer = document.querySelector(".player");
 const timer = document.querySelector(".timer");
 
+let finalTime = 0;
+
 const characters = [
   "beth",
   "jerry",
@@ -24,6 +26,10 @@ const createElement = (tag, className) => {
 let firstCard = "";
 let secondCard = "";
 
+const backMenu = () => {
+  window.location = "../index.html";
+}
+
 const checkEndGame = () => {
   const disabledCards = document.querySelectorAll(".disabled-card");
 
@@ -31,6 +37,23 @@ const checkEndGame = () => {
     clearInterval(this.loop);
     alert(`Parabéns, ${spanPlayer.innerHTML}! Seu tempo foi: ${timer.innerHTML}`);
   }
+  const playerName = spanPlayer.innerHTML;
+  const finalTime = timer.innerHTML;
+
+  const players = JSON.parse(localStorage.getItem("players")) || [];
+
+  const existingPlayerIndex = players.findIndex((player) => player.name === playerName);
+  
+  if (existingPlayerIndex >= 0) {
+    players[existingPlayerIndex].time = +finalTime;
+  } else {
+    players.push({ name: playerName, time: +finalTime });
+  }
+
+  players.sort((a, b) => a.time - b.time);
+
+  localStorage.setItem("players", JSON.stringify(players));
+  localStorage.setItem("lastPlayer", JSON.stringify({ name: playerName, time: finalTime }));
 };
 
 const checkCards = () => {
