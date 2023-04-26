@@ -1,8 +1,8 @@
 const backmenu = () => {
   window.location = "../index.html";
-}
+};
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function () {
   const players = JSON.parse(localStorage.getItem("players")) || [];
   const leaderboardTable = document.querySelector("#leaderboard-table tbody");
 
@@ -10,15 +10,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
   const lastPlayer = JSON.parse(localStorage.getItem("lastPlayer"));
   if (lastPlayer) {
-    console.log("Último jogador adicionado: ", lastPlayer);
     const existingPlayerIndex = players.findIndex(
       (player) => player.name === lastPlayer.name
     );
     if (existingPlayerIndex !== -1) {
-      console.log("Jogador encontrado na lista de jogadores: ", players[existingPlayerIndex]);
-      if (!players[existingPlayerIndex].results.includes(Number(lastPlayer.time))) {
+      if (
+        existingPlayerIndex !== -1 &&
+        (!players[existingPlayerIndex].results ||
+          !players[existingPlayerIndex].results.includes(
+            Number(lastPlayer.time)
+          ))
+      ) {
+        if (!players[existingPlayerIndex].results) {
+          players[existingPlayerIndex].results = [];
+        }
         players[existingPlayerIndex].results.push(Number(lastPlayer.time));
-        players[existingPlayerIndex].results.sort((a, b) => a - b); // Ordena os resultados em ordem crescente
+        players[existingPlayerIndex].results.sort((a, b) => a - b);
       }
     } else {
       players.push({
@@ -27,29 +34,44 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
   }
-
-  players.sort((a, b) => a.results[0] - b.results[0]); // Ordena os jogadores pelo menor tempo
-
-  console.log("Lista de jogadores atualizada: ", players);
-
-  let rank = 1;
+  const allResults = [];
   players.forEach((player) => {
-    player.results.forEach((time) => {
-      const row = leaderboardTable.insertRow();
-      const rankCell = row.insertCell();
-      const nameCell = row.insertCell();
-      const timeCell = row.insertCell();
-
-      rankCell.textContent = rank;
-      nameCell.textContent = player.name;
-      timeCell.textContent = time;
-
-      rank++;
-    });
+    if (player.results) {
+      allResults.push(...player.results);
+    }
   });
 
-  console.log("Tabela de classificação atualizada.");
+  allResults.sort((a, b) => a - b);
 
+  let rank = 1;
+  allResults.forEach((time) => {
+    const row = leaderboardTable.insertRow();
+    const rankCell = row.insertCell();
+    const nameCell = row.insertCell();
+    const timeCell = row.insertCell();
+
+    const player = players.find(
+      (player) => player && player.results && player.results.includes(time)
+    );
+
+    rankCell.textContent = rank;
+    if (player && player.results && player.results.length > 0) {
+      nameCell.textContent = player.name;
+    } else {
+      nameCell.textContent = "Nenhum resultado para este jogador";
+    }
+    timeCell.textContent = time;
+
+    rank++;
+  });
   localStorage.setItem("players", JSON.stringify(players));
-  console.log("Lista de jogadores salva no localStorage.");
+});
+
+const clearLeaderboardButton = document.querySelector("#clear-leaderboard");
+clearLeaderboardButton.addEventListener("click", function () {
+  const leaderboardTable = document.querySelector("#leaderboard-table tbody");
+  leaderboardTable.innerHTML = "";
+  localStorage.removeItem("players");
+  localStorage.removeItem("lastPlayer");
+  alert("Tabela de classificação limpa.");
 });
